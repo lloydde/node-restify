@@ -6,6 +6,7 @@ var http = require('http');
 
 var filed = require('filed');
 var uuid = require('node-uuid');
+var vasync = require('vasync');
 
 var HttpError = require('../lib/errors').HttpError;
 var RestError = require('../lib/errors').RestError;
@@ -46,6 +47,9 @@ before(function (cb) {
 
             cb();
         });
+        SERVER.on('after', restify.auditLogger({
+            log: helper.getLog('audit'),
+        }));
     } catch (e) {
         console.error(e.stack);
         process.exit(1);
@@ -67,6 +71,34 @@ after(function (cb) {
     }
 });
 
+
+
+test('GH-734 test prallel handlers', function (t) {
+    SERVER.get('/parallel', function (req, res, next) {
+        req.startTimer('parallel');
+
+        setTimeout(function () {
+            req.endTimer('1');
+        }, 200);
+
+        setTimeout(function () {
+            req.endTimer('2');
+        }, 300);
+
+        setTimeout(function () {
+            req.endTimer('3');
+            req.endTimer();
+
+            return next();
+        }, 400);
+    });
+
+    CLIENT.get('/parallel', function (err, _, res) {
+        t.equal(res.statusCode, 200);
+        process.exit();
+        t.end();
+    });
+});
 
 test('listen and close (port only)', function (t) {
     var server = restify.createServer();
