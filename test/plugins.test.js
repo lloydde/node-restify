@@ -891,7 +891,7 @@ test('audit logger timer test', function (t) {
         })
     }));
 
-    SERVER.get('/audit', function testHandler(req, res, next) {
+    SERVER.get('/audit', function aTestHandler(req, res, next) {
         req.startHandlerTimer('audit-sub');
 
         setTimeout(function () {
@@ -904,12 +904,17 @@ test('audit logger timer test', function (t) {
     CLIENT.get('/audit', function (err, req, res) {
         t.ifError(err);
         // check timers
-        t.equal(ringbuffer.records.length, 1, 'should only have 1 log record');
         t.ok(ringbuffer.records[0], 'no log records');
-        t.ok(ringbuffer.records[0].req.timers.testHandler > 1000000,
-             'testHandler should be > 1000000');
-        t.ok(ringbuffer.records[0].req.timers.testHandler > 1000000,
-             'audit-sub  should be > 1000000');
+        t.equal(ringbuffer.records.length, 1, 'should only have 1 log record');
+        t.ok(ringbuffer.records[0].req.timers.aTestHandler > 1000000,
+             'atestHandler should be > 1000000');
+        t.ok(ringbuffer.records[0].req.timers['aTestHandler-audit-sub'] >
+             1000000, 'aTestHandler-audit-sub should be > 1000000');
+        var handlers = Object.keys(ringbuffer.records[0].req.timers);
+        t.equal(handlers[handlers.length - 2], 'aTestHandler-audit-sub',
+                'sub handler timer not in order');
+        t.equal(handlers[handlers.length - 1], 'aTestHandler',
+                'aTestHandler not last');
         t.end();
     });
 });
