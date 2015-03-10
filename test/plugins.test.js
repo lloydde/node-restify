@@ -914,6 +914,7 @@ test('audit logger timer test', function (t) {
     });
 });
 
+
 ///--- Privates
 function serveStaticTest(t, testDefault, tmpDir, regex) {
     var staticContent = '{"content": "abcdefg"}';
